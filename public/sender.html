@@ -18,7 +18,7 @@
         const statusElement = document.getElementById("status");
         const crashButton = document.getElementById("crashButton");
 
-        const deviceId = "sender_01";
+        const deviceId = "sender_" + Date.now() + "_" + Math.floor(Math.random() * 10000);
 
         const protocol = window.location.protocol === "https:" ? "wss" : "ws";
         const websocket = new WebSocket(

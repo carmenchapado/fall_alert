@@ -55,10 +55,13 @@ async def websocket_handler(request):
                     print("Crash alert received:")
                     print(data)
 
-                    for client_id, client in connected_clients.items():
+                    for client_id, client in list(connected_clients.items()):
                         if client["role"] == "receiver":
-                            await client["websocket"].send_json(data)
-                            print(f"Alert sent to {client_id}")
+                            try:
+                                await client["websocket"].send_json(data)
+                                print(f"Alert sent to {client_id}")
+                            except Exception as error:
+                                print(f"Could not send alert to {client_id}: {error}")
 
                 elif message_type == "ack":
                     print(f"ACK received from {data.get('device_id')}")
