@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crash Detector Sender</title>
+</head>
+<body>
+    <h1>Crash Detector</h1>
+    <h2>Sender</h2>
+
+    <p id="status">Connecting to server...</p>
+
+    <button id="crashButton">
+        Simulate Crash
+    </button>
+
+    <script>
+        const statusElement = document.getElementById("status");
+        const crashButton = document.getElementById("crashButton");
+
+        const deviceId = "sender_01";
+
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const websocket = new WebSocket(
+            `${protocol}://${window.location.host}/ws`
+        );
+
+        websocket.onopen = function () {
+            statusElement.textContent = "Connected to server";
+
+            websocket.send(JSON.stringify({
+                type: "register",
+                role: "sender",
+                device_id: deviceId
+            }));
+        };
+
+        websocket.onmessage = function (event) {
+            const message = JSON.parse(event.data);
+
+            if (message.type === "registration_success") {
+                statusElement.textContent =
+                    "Registered as " + message.device_id;
+            }
+        };
+
+        crashButton.onclick = function () {
+            const crashAlert = {
+                type: "crash_alert",
+                event_id: "crash_" + Date.now(),
+                device_id: deviceId,
+                timestamp: new Date().toISOString(),
+                latitude: 32.7157,
+                longitude: -117.1611,
+                acceleration: 8.4
+            };
+
+            websocket.send(JSON.stringify(crashAlert));
+
+            statusElement.textContent = "Crash alert sent";
+        };
+    </script>
+</body>
+</html>

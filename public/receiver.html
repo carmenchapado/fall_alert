@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Crash Detector Receiver</title>
+</head>
+<body>
+    <h1>Crash Detector</h1>
+    <h2>Receiver</h2>
+
+    <p id="status">Connecting to server...</p>
+    <div id="alert"></div>
+
+    <script>
+        const statusElement = document.getElementById("status");
+        const alertElement = document.getElementById("alert");
+
+        const deviceId = "receiver_" + Math.floor(Math.random() * 10000);
+
+        const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+        const websocket = new WebSocket(
+            `${protocol}://${window.location.host}/ws`
+        );
+
+        websocket.onopen = function () {
+            statusElement.textContent = "Connected to server";
+
+            websocket.send(JSON.stringify({
+                type: "register",
+                role: "receiver",
+                device_id: deviceId
+            }));
+        };
+
+        websocket.onmessage = function (event) {
+            const message = JSON.parse(event.data);
+
+            if (message.type === "registration_success") {
+                statusElement.textContent =
+                    "Registered as " + message.device_id;
+            }
+
+            if (message.type === "crash_alert") {
+                alertElement.innerHTML = `
+                    <h2>🚨 CRASH DETECTED 🚨</h2>
+                    <p>Device: ${message.device_id}</p>
+                    <p>Latitude: ${message.latitude}</p>
+                    <p>Longitude: ${message.longitude}</p>
+                    <p>Time: ${message.timestamp}</p>
+                `;
+
+                websocket.send(JSON.stringify({
+                    type: "ack",
+                    event_id: message.event_id,
+                    device_id: deviceId
+                }));
+            }
+        };
+
+        websocket.onerror = function () {
+            statusElement.textContent = "Connection error";
+        };
+
+        websocket.onclose = function () {
+            statusElement.textContent = "Disconnected from server";
+        };
+    </script>
+</body>
+</html>
